@@ -48,7 +48,6 @@ class threadAutentica extends Thread{
                pw.println("2-Autenticar-se como cliente.");
                pw.println("fim");
                String s = br.readLine();
-               pw.println(s);
                escolha = Integer.parseInt(s);
                if(escolha == 0){  // cliente desconectado
                  pw.println("A terminar ligação, adeus.");
@@ -90,6 +89,7 @@ class threadAutentica extends Thread{
                            pw.println("fim");
                           } else break;
                         } 
+                        pw.println(cliente.cliente2String());
                         //-> neste ponto cliente está autenticado
                         pw.println("0- Sair da conta.");
                         pw.println("1-Alugar um servidor.");
@@ -161,11 +161,12 @@ class threadAutentica extends Thread{
                                }
                               }
                               // licitação tem de ser positiva
-                              pw.println("Passou");
                               if((numero = info.reservaLicitacao(cliente.getId(),licitacao)) >= 0){
                                   // efetua reserva e adiciona ao cliente
-                                  cliente.addReserva(numero,new Reserva(licitacao));
                                   pw.println("Passou");
+                                  pw.println(cliente.cliente2String());
+                                  cliente.addReserva(numero,new Reserva(licitacao));
+                                  pw.println(cliente.toString());
                               }
                             } catch(IOException e){
                                 pw.println("Erro ao introduzir valor. Reserva cancelada.");

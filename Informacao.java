@@ -228,14 +228,11 @@ class Informacao{
     try{
 
       if(this.nReservaLicitacao > 0){ // se existirem  servidores para licitação
-        System.out.println("Pode reservar");
         this.nReservaLicitacao--;
         this.nReservadosLicitacao++;
         this.reservas.put(this.nReserva,new Servidor(2,2,id));
-        //modificar licitador
-
-
         this.nReserva++;
+        System.out.println(this.nReserva--);
         return (this.nReserva--);
       }
       else{ // põe em lista de espera
