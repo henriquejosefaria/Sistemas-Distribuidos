@@ -32,8 +32,8 @@ class Informacao{
     this.reservas = new HashMap<Integer,Servidor>();
     this.licitacoes = new HashMap<Integer,Double>();
     this.nomeServidor = "Comon";
-    this.nReservaNormal = 15;
-    this.nReservaLicitacao = 15;
+    this.nReservaNormal = 4;
+    this.nReservaLicitacao = 4;
     this.nReservadosNormal = 0;
     this.nReservadosLicitacao = 0;
     this.preco = 1;
@@ -233,7 +233,7 @@ class Informacao{
         return n;
       } else if(this.nReservaLicitacao > 0){
         this.nReservaLicitacao--;
-        this.nReservadosLicitacao++;
+        this.nReservadosNormal++;
         this.reservas.put(n,new Servidor(2,1,id));
         return n;
       }
@@ -288,6 +288,8 @@ class Informacao{
       return 1;
 
     } finally{
+      this.nReservadosNormal++;
+      this.nReservadosLicitacao--;
       c1.l.unlock();
       c2.l.unlock();
       l.unlock();
@@ -324,8 +326,14 @@ class Informacao{
           c.l.lock();
           c.addReserva(i,new Reserva(l));
         } else{
-          this.nReservaLicitacao++;
-          this.nReservadosLicitacao--;
+          if(i2 == 1){ // estava reservado normalmente
+            this.nReservadosNormal--;
+            this.nReservaLicitacao++;
+
+          }else{ // estava reservado com licitacao
+            this.nReservaLicitacao++;
+            this.nReservadosLicitacao--;
+          }
           this.reservas.remove(i);
         }
       }

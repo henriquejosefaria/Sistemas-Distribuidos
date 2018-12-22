@@ -40,7 +40,7 @@ class threadAutentica extends Thread{
        b = true;
        try{
           while(b) {
-               pw.println("Escolha uma opção:");
+               pw.println("\nEscolha uma opção:");
                pw.println("0-sair");
                pw.println("1-Registar-se como novo cliente.");
                pw.println("2-Autenticar-se como cliente.");
@@ -48,6 +48,7 @@ class threadAutentica extends Thread{
                String s = br.readLine();
                escolha = Integer.parseInt(s);
                if(escolha == 0){  // cliente desconectado
+                 System.out.println("Cliente desconectou-se");
                  pw.println("A terminar ligação, adeus.");
                  b = false;
                } else if(escolha == 1){ // registar novo cliente
@@ -55,26 +56,34 @@ class threadAutentica extends Thread{
                    // regista novo cliente
                    while(b){
                     int x = clientes.size()+1;
-                    pw.println("O seu id é : " + x);
-                    pw.println("Insira a sua nova pass:");
+                    pw.println("\nO seu id é : " + x);
+                    pw.println("Insira a sua nova password:");
                     pw.println("fim");
                     String pass = br.readLine();
-                    clientes.put(x,new Cliente(x,pass,new HashMap<Integer,Reserva>(),0));
-                    break;
+                    if(pass.length()>0){
+                      clientes.put(x,new Cliente(x,pass,new HashMap<Integer,Reserva>(),0));
+                      break;
+                    } else{
+                      pw.println("\nInsira uma password não vazia por favor.");
+                    }
                    }
                } else if(escolha == 2){ // entrar como cliente
                   while(b){ // fase de autenticação
                       // 1º recebe userId
-                      pw.println("UserId:");
+                      pw.println("\nUserId:");
                       pw.println("fim");
-                      int userId = Integer.parseInt(br.readLine());
-                      if(!this.clientes.containsKey(userId)){
-                         pw.println("Insira um UserId válido.");
-                         pw.println("fim");
-                      } else{
-                         cliente = clientes.get(userId);
-                         break;
-                      } 
+                      try{
+                        int userId = Integer.parseInt(br.readLine());
+                        if(!this.clientes.containsKey(userId)){
+                           pw.println("\nInsira um UserId válido.");
+                        } else{
+                           cliente = clientes.get(userId);
+                           break;
+                        } 
+                      } catch(NumberFormatException e){
+                        pw.println("\nInsira um número por favor.");
+                        System.out.println("Foi inserido algo que não um número.");
+                      }
                   }
                   while(b){ // userId existe
                       //2º recebe password do user
@@ -86,17 +95,24 @@ class threadAutentica extends Thread{
                       } else break;
                   }
                   while(true){
-                        //-> neste ponto cliente está autenticado
-                        pw.println("\n\nEscolha uma opção:");
-                        pw.println("0- Sair da conta.");
-                        pw.println("1-Alugar um servidor.");
-                        pw.println("2-Libertar um servidor.");
-                        pw.println("3-Consultar saldo.");
-                        pw.println("fim");
-                        escolha = Integer.parseInt(br.readLine());
+                        while(true){
+                          //-> neste ponto cliente está autenticado
+                          pw.println("\n\nEscolha uma opção:");
+                          pw.println("0- Sair da conta.");
+                          pw.println("1-Alugar um servidor.");
+                          pw.println("2-Libertar um servidor.");
+                          pw.println("3-Consultar divida.");
+                          pw.println("fim");
+                          try{
+                            escolha = Integer.parseInt(br.readLine());
+                            break;
+                          } catch(NumberFormatException e){
+                            pw.println("\nInsira um número válido.");
+                          }
+                        }
                         if(escolha == 0){
                           b = false;
-                          pw.println("Desconectado.Adeus !)");
+                          pw.println("Desconectado.\nAdeus.");
                           break;
                         }
                         if(escolha == 1){ // Alugar servidor
@@ -118,13 +134,9 @@ class threadAutentica extends Thread{
                            if(!servidores.containsKey(nomeServidor)){
                              pw.println("Insira um nome de servidor válido");
                              pw.println("fim");
-                           } else {// verificar se há servidores disponíveis desse tipo
-                             info = servidores.get(nomeServidor);
-                             if(info.getServidoresLivres() > 0){ break;
-                             } else{
-                               pw.println("Servidores indiponíveis para reserva, aguarde e tente mais tarde.");
-                               pw.println("fim");
-                             } 
+                           } else{
+                            info = servidores.get(nomeServidor);
+                            break;
                            }
                           } // servidor escolhido e possível de usar
                           // escolher tipo de reserva --> possivelmente faz 
@@ -133,15 +145,19 @@ class threadAutentica extends Thread{
                            pw.println("Reservar servidor -> Insira 1 ");
                            pw.println("Ir a leilão por servidor -> Insira 2");
                            pw.println("fim");
-                           uso = Integer.parseInt(br.readLine());
-                           if(uso != 1 && uso != 2){
-                             pw.println("Insira um tipo de reserva válida.");
-                             pw.println("fim");
-                           } else{
-                             // verificação para reserva
-                             if(uso == 1 && (info.getLivresReserva() > 0 || info.getLivresLeilao() > 0)) break;
-                             // verificação para leilão
-                             if(uso == 2 && info.getLivresLeilao() > 0) break;
+                           try{
+                            uso = Integer.parseInt(br.readLine());
+                            if(uso != 1 && uso != 2){
+                              pw.println("Insira um tipo de reserva válida.");
+                              pw.println("fim");
+                            } else{
+                              // verificação para reserva
+                              if(uso == 1 && (info.getLivresReserva() > 0 || info.getLivresLeilao() > 0 || info.getOcupadosLeilao() > 0)) break;
+                              // verificação para leilão
+                              if(uso == 2) break;
+                            }
+                           } catch(NumberFormatException e){
+                            pw.println("Insira um número válido.");
                            }
                           } // tipo de reserva escolhido e possível até ao momento
                           // leiloar servidor
@@ -196,21 +212,34 @@ class threadAutentica extends Thread{
                           }
                         }
                         else if(escolha == 2){ // libertar servidores alocados
-                           try{
                              while(b){
+                               Map<Integer,Reserva> reservas = cliente.getReservas();
+                              if(reservas.size() == 0){
+                                pw.println("Não possui reservas para libertar.");
+                                break;
+                              }
                                 pw.println("\n\nAs suas reservas:");
-                                Map<Integer,Reserva> reservas = cliente.getReservas();
                                 for(Map.Entry<Integer,Reserva> r : reservas.entrySet()){
                                    pw.println("\n nº da reserva : " + r.getKey() + " --> { Preço : " + r.getValue().getPreco() + ", Tempo da Reserva : " + r.getValue().getTReserva() + "}");
                                  }
                                  int i;
-                                 pw.println("Indique a reserva que pretende terminar:");
-                                 pw.println("Se pretende voltar atrás insira 0");
-                                 pw.println("fim");
-                                 i = Integer.parseInt(br.readLine());
-                                 if(i == 0) break;
+                                 while(true){
+                                  try{
+                                    pw.println("\nIndique a reserva que pretende terminar:");
+                                    pw.println("Se pretende voltar atrás insira 0");
+                                    pw.println("fim");
+                                    i = Integer.parseInt(br.readLine());
+                                    break;
+                                  } catch(NumberFormatException e){
+                                    pw.println("\nInsira um número por favor.");
+                                  }
+
+                                 }
+                                 if(i == 0){
+                                  pw.println("\nA sair...");
+                                  break;
+                                 }
                                  while(b){
-                                   System.out.println(i);
                                    // encontrar tipo de servidor e fazer lock()
                                    for(Map.Entry<String,Informacao> tipoServidor : servidores.entrySet()){
                                     if(tipoServidor.getValue().getReservas().containsKey(i)){
@@ -218,27 +247,27 @@ class threadAutentica extends Thread{
                                       break;
                                     }
                                    }
-                                   info.l.lock();
-                                   cliente.l.lock(); 
-                                   if(reservas.containsKey(i)){
-                                     // aumenta a divida do cliente
-                                     cliente.growDivida(i);
-                                     // apaga a reserva do cliente
-                                     cliente.removeReserva(i);
-                                     //servidor apagado pronto para reservar
-                                     info.removeReserva(i,this.clientes);
-                                     break;
-                                   } else {
-                                     pw.println("A reserva inserida não lhe pertence, tente outra vez.");
-                                     pw.println("fim");
+                                   try{
+                                    info.l.lock();
+                                    cliente.l.lock(); 
+                                    if(reservas.containsKey(i)){
+                                      // aumenta a divida do cliente
+                                      cliente.growDivida(i);
+                                      // apaga a reserva do cliente
+                                      cliente.removeReserva(i);
+                                      //servidor apagado pronto para reservar
+                                      info.removeReserva(i,this.clientes);
+                                      break;
+                                    }else {
+                                      pw.println("A reserva inserida não lhe pertence, tente outra vez.");
+                                      break;
+                                    }
+                                   } finally{
+                                      info.l.unlock();
+                                      cliente.l.unlock();
                                    }
                                  }
                              }
-       
-                           } finally{
-                             info.l.unlock();
-                             cliente.l.unlock();
-                           }
                         }
                         else if(escolha == 3){ // consultar divida da conta
                            pw.println(cliente.getDivida());
