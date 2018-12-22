@@ -18,8 +18,8 @@ public class Cliente{
   private int id;
   private String password;
   public ReentrantLock l = new ReentrantLock();
-  private Map<Integer,Reserva> reservas;
-  private double divida; 
+  private Map<Integer,Reserva> reservas = new HashMap<Integer,Reserva>();
+  private double divida = 0; 
 
   public Cliente(){
     this.id = -1;
@@ -31,6 +31,7 @@ public class Cliente{
   public Cliente(int id,String password, HashMap<Integer,Reserva> reservas, double divida){
     this.id = id;
     this.password = password;
+    this.reservas = new HashMap<Integer,Reserva>();
     for(Map.Entry<Integer,Reserva> r : reservas.entrySet()){
       this.reservas.put(r.getKey(),r.getValue());
     }
@@ -40,6 +41,7 @@ public class Cliente{
   public Cliente(Cliente c){
     this.id = c.getId();
     this.password = c.getPass();
+    this.reservas = new HashMap<Integer,Reserva>();
     this.reservas = c.getReservas();
     this.divida = c.getDivida();
   }
@@ -67,7 +69,7 @@ public class Cliente{
     this.password = pass;
   }
   public void addReserva(int nReserva,Reserva r){
-    this.reservas.put(nReserva,r.clone());
+    this.reservas.put(nReserva,r);
   }
   public void setDivida(double divida){
     this.divida = divida;
@@ -88,9 +90,17 @@ public class Cliente{
     return new Cliente(c);
   }
 
-  public void growDivida(long i){
-    Reserva r = this.reservas.get(i);
-    this.divida += (r.getPreco() * r.getTReserva());
+  public void growDivida(double i){
+    this.l.lock();
+    try{
+      // uso assim porque o get não funciona direito (dá erro)
+      for(Map.Entry<Integer,Reserva> r : reservas.entrySet())
+        if(r.getKey() == i){
+          this.divida += r.getValue().getDivida();
+      }
+    } finally{
+      this.l.unlock();
+    }
   }
 
   public void removeReserva(int i){

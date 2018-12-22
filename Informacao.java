@@ -19,14 +19,14 @@ class Informacao{
 
   private Map <Integer,Servidor> reservas; // numero de reserva e Servidor reservado (reserva/licitacao)
   private Map <Integer,Double> licitacoes = new HashMap<Integer,Double>(); // licitacoes em espera
-  private ReentrantLock l = new ReentrantLock();
+  public ReentrantLock l = new ReentrantLock();
   private String nomeServidor;      // nome do servidor
   private int nReservaNormal;       // nº de reservados normal
   private int nReservaLicitacao;    // nº de reservados por licitação
   private int nReservadosNormal;    //nº de servidores para reserva
   private int nReservadosLicitacao; //nº de servidores para licitação
   private double preco;             // preco reserva do tipo de servidor
-  private int nReserva;             // indice de prox. reserva
+  //private int nReserva;             // indice de prox. reserva
 
   public Informacao(){
     this.reservas = new HashMap<Integer,Servidor>();
@@ -37,10 +37,9 @@ class Informacao{
     this.nReservadosNormal = 0;
     this.nReservadosLicitacao = 0;
     this.preco = 1;
-    this.nReserva = 0;
   }
   
-  public Informacao(Map<Integer,Servidor> reservas, Map<Integer,Double> licitacoes, String nomeServidor, Integer nReservaNormal, Integer nReservaLicitacao, Integer nReservadosNormal, Integer nReservadosLicitacao, Double preco,Integer nReserva){
+  public Informacao(Map<Integer,Servidor> reservas, Map<Integer,Double> licitacoes, String nomeServidor, Integer nReservaNormal, Integer nReservaLicitacao, Integer nReservadosNormal, Integer nReservadosLicitacao, Double preco){
     for(Map.Entry<Integer,Servidor> r : reservas.entrySet())
       this.reservas.put(r.getKey(),r.getValue());
      for(Map.Entry<Integer,Double> l : licitacoes.entrySet())
@@ -51,7 +50,6 @@ class Informacao{
     this.nReservadosNormal = nReservadosNormal;
     this.nReservadosLicitacao = nReservadosLicitacao;
     this.preco = preco;
-    this.nReserva = nReserva;
   }
   
   public Informacao(Informacao i){
@@ -67,7 +65,6 @@ class Informacao{
     this.nReservadosNormal = i.getOcupadosReserva();
     this.nReservadosLicitacao = i.getOcupadosLeilao();
     this.preco = i.getPreco();
-    this.nReserva = i.getnReserva();
   }
 
   public String getNomeServidor(){
@@ -128,15 +125,6 @@ class Informacao{
     l.lock();
     try{
       return this.preco;
-    } finally{
-      l.unlock();
-    }
-  }
-  
-  public int getnReserva(){
-    l.lock();
-    try{
-      return this.nReserva;
     } finally{
       l.unlock();
     }
@@ -214,26 +202,15 @@ class Informacao{
     }
   }
   
-  public void setnReserva(Integer n){
+  public int reservaLicitacao(Integer id,Double d,int n){
     l.lock();
+    int i;
     try{
-      this.nReserva = n;
-    } finally{
-      l.unlock();
-    }
-  }
-
-  public int reservaLicitacao(Integer id,Double d){
-    l.lock();
-    try{
-
       if(this.nReservaLicitacao > 0){ // se existirem  servidores para licitação
         this.nReservaLicitacao--;
         this.nReservadosLicitacao++;
-        this.reservas.put(this.nReserva,new Servidor(2,2,id));
-        this.nReserva++;
-        System.out.println(this.nReserva--);
-        return (this.nReserva--);
+        this.reservas.put(n,new Servidor(2,2,id));
+        return n;
       }
       else{ // põe em lista de espera
         this.licitacoes.put(id,d);
@@ -245,24 +222,20 @@ class Informacao{
     }
   }
 
-  public int reservaNormal(Integer id){
-
+  public int reservaNormal(Integer id,int n){
     l.lock();
+    int i;
     try{
-
       if(this.nReservaNormal > 0){
         this.nReservaNormal--;
         this.nReservadosNormal++;
-        this.reservas.put(this.nReserva,new Servidor(1,1,id));
-
-        this.nReserva++;
-        return (this.nReserva--);
+        this.reservas.put(n,new Servidor(1,1,id));
+        return n;
       } else if(this.nReservaLicitacao > 0){
         this.nReservaLicitacao--;
         this.nReservadosLicitacao++;
-        this.reservas.put(this.nReserva,new Servidor(2,1,id));
-        this.nReserva++;
-        return (this.nReserva--);
+        this.reservas.put(n,new Servidor(2,1,id));
+        return n;
       }
       else return -1;
 
@@ -292,30 +265,46 @@ class Informacao{
 
   public int mudaDono(int numero, int id, Map<Integer,Cliente> clientes){
     l.lock();
+    Cliente c1 = new Cliente();
+    Cliente c2 = new Cliente();
     try{
 
       Servidor r = reservas.get(numero);
+      c1 = clientes.get(r.getIdCliente());
+      c2 = clientes.get(id);
+      if(r.getIdCliente() < id){
+        c1.l.lock();
+        c2.l.lock();
+      } else{
+        c2.l.lock();
+        c1.l.lock();
+      }
       clientes.get(r.getIdCliente()).growDivida(numero); // aumenta divida do cliente
-      clientes.get(r.getIdCliente()).removeReserva(numero);
+      clientes.get(r.getIdCliente()).removeReserva(numero); // remove a reserva da lista de reservas do cliente
+      // adiciona a reserva ao novo cliente
       clientes.get(id).addReserva(numero,new Reserva(this.preco));
       r.setIdCliente(id);
       r.setTReserva(1);
       return 1;
 
     } finally{
+      c1.l.unlock();
+      c2.l.unlock();
       l.unlock();
     }
   }
 
   public void removeReserva(int i, Map<Integer,Cliente> clientes){
     l.lock();
+    Cliente c = new Cliente();
+    c.l.lock();
     try{
-
       int i1 = this.reservas.get(i).getTipo();
       int i2 = this.reservas.get(i).getTReserva(); 
       if(i1 == 1){ // tipo -> reservaNormal
         this.nReservaNormal++;
         this.nReservadosNormal--;
+        this.reservas.remove(i);
       }else{ // tipo -> reservaLicitação
         if(this.licitacoes.size() > 0){
           double l = 0;
@@ -326,17 +315,22 @@ class Informacao{
               id = licitacao.getKey();
             }
           }
+          this.licitacoes.remove(id);
           // atualiza ocupante
           this.reservas.get(i).setTReserva(2);
           this.reservas.get(i).setIdCliente(id);
           //atualiza reserva no cliente
-          clientes.get(id).addReserva(i,new Reserva(l));
+          c = clientes.get(id);
+          c.l.lock();
+          c.addReserva(i,new Reserva(l));
         } else{
           this.nReservaLicitacao++;
           this.nReservadosLicitacao--;
+          this.reservas.remove(i);
         }
       }
     } finally{
+      c.l.unlock();
       l.unlock();
     }
   }

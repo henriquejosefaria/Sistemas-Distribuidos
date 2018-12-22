@@ -25,7 +25,7 @@ class servidores{
     nomes.add("Divisoes");
     nomes.add("Multiplicacoes");
     nomes.add("Texto");
-    nomes.add("Ecxel");
+    nomes.add("Excel");
     nomes.add("Word");
     nomes.add("Paint");
     nomes.add("Leitura");

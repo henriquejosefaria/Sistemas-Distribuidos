@@ -17,15 +17,13 @@ import java.util.concurrent.locks.ReentrantLock;
 class threadAutentica extends Thread{
   private Map<Integer,Cliente> clientes = new HashMap<>();
   private Map<String,Informacao> servidores = new HashMap<>();
+  private int nReserva = 1;
   Socket cs;
   public threadAutentica(Socket cs,Map<String,Informacao> servidores, Map<Integer,Cliente> clientes){
     this.cs = cs;
-    for(Map.Entry<String,Informacao> servidor : servidores.entrySet()){
-      this.servidores.put(servidor.getKey(),servidor.getValue());
-      }
-    for(Map.Entry<Integer,Cliente> cliente : clientes.entrySet()){
-      this.clientes.put(cliente.getKey(),cliente.getValue());
-    }
+    this.clientes = clientes; 
+    this.servidores = servidores;
+    this.nReserva = 1;
   }
   public void run(){
     Cliente cliente = new Cliente();
@@ -65,32 +63,31 @@ class threadAutentica extends Thread{
                     break;
                    }
                } else if(escolha == 2){ // entrar como cliente
+                  while(b){ // fase de autenticação
+                      // 1º recebe userId
+                      pw.println("UserId:");
+                      pw.println("fim");
+                      int userId = Integer.parseInt(br.readLine());
+                      if(!this.clientes.containsKey(userId)){
+                         pw.println("Insira um UserId válido.");
+                         pw.println("fim");
+                      } else{
+                         cliente = clientes.get(userId);
+                         break;
+                      } 
+                  }
+                  while(b){ // userId existe
+                      //2º recebe password do user
+                      pw.println("Password:");
+                      pw.println("fim");
+                      String pass = br.readLine();
+                      if(!pass.equals(cliente.getPass())){
+                         pw.println("Insira uma Password válida.");
+                      } else break;
+                  }
                   while(true){
-                        while(b){ // fase de autenticação
-                          // 1º recebe userId
-                          pw.println("UserId:");
-                          pw.println("fim");
-                          int userId = Integer.parseInt(br.readLine());
-                          if(!this.clientes.containsKey(userId)){
-                           pw.println("Insira um UserId válido.");
-                           pw.println("fim");
-                          } else{
-                           cliente = clientes.get(userId);
-                           break;
-                          } 
-                        }
-                        while(b){ // userId existe
-                          //2º recebe password do user
-                          pw.println("Password:");
-                          pw.println("fim");
-                          String pass = br.readLine();
-                          if(!pass.equals(cliente.getPass())){
-                           pw.println("Insira uma Password válida.");
-                           pw.println("fim");
-                          } else break;
-                        } 
-                        pw.println(cliente.cliente2String());
                         //-> neste ponto cliente está autenticado
+                        pw.println("\n\nEscolha uma opção:");
                         pw.println("0- Sair da conta.");
                         pw.println("1-Alugar um servidor.");
                         pw.println("2-Libertar um servidor.");
@@ -102,7 +99,7 @@ class threadAutentica extends Thread{
                           pw.println("Desconectado.Adeus !)");
                           break;
                         }
-                        if(escolha == 1){
+                        if(escolha == 1){ // Alugar servidor
                           // apresenta todos os servidores e quais os disponíveis e ocupados
                           for(Map.Entry<String,Informacao> servidor : servidores.entrySet()){
                             info = servidor.getValue();
@@ -160,64 +157,77 @@ class threadAutentica extends Thread{
                                  pw.println("fim");
                                }
                               }
+                              info.l.lock();
                               // licitação tem de ser positiva
-                              if((numero = info.reservaLicitacao(cliente.getId(),licitacao)) >= 0){
+                              if(info.reservaLicitacao(cliente.getId(),licitacao,this.nReserva) >= 0){
                                   // efetua reserva e adiciona ao cliente
-                                  pw.println("Passou");
+                                  cliente.addReserva(this.nReserva,new Reserva(licitacao));
+                                  this.nReserva++;
                                   pw.println(cliente.cliente2String());
-                                  cliente.addReserva(numero,new Reserva(licitacao));
-                                  pw.println(cliente.toString());
                               }
                             } catch(IOException e){
                                 pw.println("Erro ao introduzir valor. Reserva cancelada.");
                                 pw.println("fim");
+                            } finally{
+                              info.l.unlock();
                             }
                           }
                           if(uso == 1){ // reservar
-                             // tenho servidores para reserva normal
-                             if((numero = info.reservaNormal(cliente.getId())) >= 0){
-                               // efetua reserva e adiciona ao cliente
-                               cliente.addReserva(numero,new Reserva(info.getPreco()));
-                             }
-                             // não tenho servidores de reserva normal
-                             else if((numero = info.reservaLicitacao(cliente.getId(),info.getPreco())) >= 0){
+                            try{
+                              info.l.lock(); // isto serve caso entre no else if (impede descrepancias)
+                              // tenho servidores para reserva normal
+                              if(info.reservaNormal(cliente.getId(),this.nReserva) >= 0){
                                 // efetua reserva e adiciona ao cliente
-                                cliente.addReserva(numero,new Reserva(info.getPreco()));
+                                cliente.addReserva(this.nReserva,new Reserva(info.getPreco()));
+                                this.nReserva++;
+                              }
+                              // problema concorrencia 1º servidor 2º cliente
+                              else if((numero = info.isPossible()) >= 0){
+                                 info.mudaDono(numero,cliente.getId(),clientes);
+                              }
+                              else{
+                                 pw.println("Pedimos desculpa pelo inconveniente, mas de momento não há servidores disponíveis deste tipo.");
+                                 pw.println("fim");
+                              }
+                             } finally{
+                               info.l.unlock();
                              }
-                             else if((numero = info.isPossible()) >= 0){
-                                info.mudaDono(numero,cliente.getId(),clientes);
-                                // efetua reserva e adiciona ao cliente
-                                cliente.addReserva(numero,new Reserva(info.getPreco()));
-                             }
-                             else{
-                                pw.println("Pedimos desculpa pelo inconveniente, mas de momento não há servidores disponíveis deste tipo.");
-                                pw.println("fim");
-                             }
+                             
                           }
                         }
                         else if(escolha == 2){ // libertar servidores alocados
                            try{
-                             cliente.l.lock();
                              while(b){
+                                pw.println("\n\nAs suas reservas:");
                                 Map<Integer,Reserva> reservas = cliente.getReservas();
                                 for(Map.Entry<Integer,Reserva> r : reservas.entrySet()){
-                                   pw.println(r.getKey());
+                                   pw.println("\n nº da reserva : " + r.getKey() + " --> { Preço : " + r.getValue().getPreco() + ", Tempo da Reserva : " + r.getValue().getTReserva() + "}");
                                  }
+                                 int i;
+                                 pw.println("Indique a reserva que pretende terminar:");
+                                 pw.println("Se pretende voltar atrás insira 0");
+                                 pw.println("fim");
+                                 i = Integer.parseInt(br.readLine());
+                                 if(i == 0) break;
                                  while(b){
-                                   pw.println("Indique a reserva que pretende terminar:");
-                                   pw.println("Se pretende voltar atrás insira -1");
-                                   pw.println("fim");
-                                   int i = Integer.parseInt(br.readLine());
-                                   if(i == -1){
-                                     break;
+                                   System.out.println(i);
+                                   // encontrar tipo de servidor e fazer lock()
+                                   for(Map.Entry<String,Informacao> tipoServidor : servidores.entrySet()){
+                                    if(tipoServidor.getValue().getReservas().containsKey(i)){
+                                      info = tipoServidor.getValue();
+                                      break;
+                                    }
                                    }
+                                   info.l.lock();
+                                   cliente.l.lock(); 
                                    if(reservas.containsKey(i)){
                                      // aumenta a divida do cliente
-                                     cliente.growDivida(reservas.get(i).getTReserva());
+                                     cliente.growDivida(i);
                                      // apaga a reserva do cliente
                                      cliente.removeReserva(i);
                                      //servidor apagado pronto para reservar
                                      info.removeReserva(i,this.clientes);
+                                     break;
                                    } else {
                                      pw.println("A reserva inserida não lhe pertence, tente outra vez.");
                                      pw.println("fim");
@@ -226,12 +236,12 @@ class threadAutentica extends Thread{
                              }
        
                            } finally{
+                             info.l.unlock();
                              cliente.l.unlock();
                            }
                         }
                         else if(escolha == 3){ // consultar divida da conta
                            pw.println(cliente.getDivida());
-                           pw.println("fim");
                         }
                         else{
                            pw.println("Escolha uma opção válida.");
