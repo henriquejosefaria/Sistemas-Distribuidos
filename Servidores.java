@@ -39,7 +39,7 @@ class Servidores{
          Socket cs = ls.accept(); // cliente ligou-se
          System.out.println("Cliente ligou-se");
            // envio do cliente para uma thread de autenticação
-         threadAutentica ta = new threadAutentica(cs,servidores,clientes);
+         ThreadAutentica ta = new ThreadAutentica(cs,servidores,clientes);
          ta.start();
      } 
     } catch(IOException e){
