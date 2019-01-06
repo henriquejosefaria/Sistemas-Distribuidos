@@ -32,6 +32,7 @@ class threadAutentica extends Thread{
     int uso = 0;
     boolean b = false;
     int escolha = -1;
+    int rollback = 0;
     try{
        // faz escrita e flush automágicamente na conecção
        PrintWriter pw = new PrintWriter(cs.getOutputStream(),true);
@@ -53,6 +54,7 @@ class threadAutentica extends Thread{
                  b = false;
                } else if(escolha == 1){ // registar novo cliente
                    b = true;
+                   pw.println("\nPode inserir 0 caso não pretenda registar-se em qualquer fase do registo:");
                    // regista novo cliente
                    int x = this.clientes.size() + 1;
                    String pass = null;
@@ -64,8 +66,20 @@ class threadAutentica extends Thread{
                     if(email.length()>0 && email.contains("@") && !clientes.containsKey(email)){
                       break;
                     } else{
+                      try{
+                          if(Integer.parseInt(email) == 0){
+                              rollback = 1;
+                              break;
+                            }
+                          } catch(NumberFormatException e){
+                              pw.println("\nInsira um email válido (Existente).");
+                          }
                       pw.println("\nInsira uma email válido por favor.");
                     }
+                   }
+                   if(rollback == 1){
+                    rollback = 0;
+                    break;
                    }
                    while(b){
                     pw.println("Insira a sua nova password:");
@@ -75,26 +89,45 @@ class threadAutentica extends Thread{
                       clientes.put(email,new Cliente(x,pass,email,new HashMap<Integer,Reserva>(),0));
                       break;
                     } else{
+                      try{
+                            if(Integer.parseInt(pass) == 0){
+                              break;
+                            }
+                          } catch(NumberFormatException e){
+                            pw.println("Insira uma Password válida.");
+                          }
                       pw.println("\nInsira uma password não vazia por favor.");
                     }
                    }
                } else if(escolha == 2){ // entrar como cliente
                   while(b){ // fase de autenticação
                       // 1º recebe userId
+                      pw.println("\nPode inserir 0 caso não pretenda entrar na sua conta em qualquer fase da autenticação:");
                       pw.println("\nEmail:");
                       pw.println("fim");
                       try{
                         String email = br.readLine();
                         if(!this.clientes.containsKey(email)){
-                           pw.println("\nInsira um email válido (Existente).");
+                          try{
+                            if(Integer.parseInt(email) == 0){
+                              rollback = 1;
+                              break;
+                            }
+                          } catch(NumberFormatException e){
+                              pw.println("\nInsira um email válido (Existente).");
+                          }
                         } else{
                            cliente = clientes.get(email);
                            break;
                         } 
                       } catch(NumberFormatException e){
-                        pw.println("\nInsira um número por favor.");
-                        System.out.println("Foi inserido algo que não um número.");
+                        pw.println("\nInsira um email válido por favor.");
+                        System.out.println("Foi inserido algo que não 0 ou email.");
                       }
+                  }
+                  if(rollback == 1){
+                    rollback = 0;
+                    break;
                   }
                   while(b){ // user existe
                       //2º recebe password do user
@@ -102,8 +135,19 @@ class threadAutentica extends Thread{
                       pw.println("fim");
                       String pass = br.readLine();
                       if(!pass.equals(cliente.getPass())){
-                         pw.println("Insira uma Password válida.");
+                        try{
+                            if(Integer.parseInt(pass) == 0){
+                              rollback = 1;
+                              break;
+                            }
+                          } catch(NumberFormatException e){
+                            pw.println("Insira uma Password válida.");
+                          }
                       } else break;
+                  }
+                  if(rollback == 1){
+                    rollback = 0;
+                    break;
                   }
                   while(true){
                         while(true){

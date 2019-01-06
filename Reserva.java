@@ -27,7 +27,7 @@ class Reserva { // nomeServer, tempo e preço
   public Reserva(String nome, double d){
     this.nome = nome;
     this.preco = d;
-    this.tempo = System.currentTimeMillis() / (3600000);
+    this.tempo = System.currentTimeMillis() / 3600000;
   }
   public Reserva(Reserva r){
     this.nome = r.getNome();
