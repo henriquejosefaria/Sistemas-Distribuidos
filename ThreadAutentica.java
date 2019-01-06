@@ -24,7 +24,6 @@ class ThreadAutentica extends Thread{
     this.cs = cs;
     this.clientes = clientes; 
     this.servidores = servidores;
-    this.nReserva = 1;
     this.gestorRes = gestorRes;
   }
   public void run(){
