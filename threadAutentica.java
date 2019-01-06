@@ -127,6 +127,7 @@ class threadAutentica extends Thread{
                           break;
                         }
                         if(escolha == 1){ // Alugar servidor
+                          String nomeServidor = null;
                           // apresenta todos os servidores e quais os disponíveis e ocupados
                           for(Map.Entry<String,Informacao> servidor : servidores.entrySet()){
                             info = servidor.getValue();
@@ -141,7 +142,7 @@ class threadAutentica extends Thread{
                           pw.println("\n\nIndique o nome do servidor que prentende utilizar.");
                           pw.println("fim");
                           while(b){ // escolher tipo de servidor
-                           String nomeServidor = br.readLine();
+                           nomeServidor = br.readLine();
                            if(!servidores.containsKey(nomeServidor)){
                              pw.println("Insira um nome de servidor válido");
                              pw.println("fim");
@@ -186,9 +187,9 @@ class threadAutentica extends Thread{
                               }
                               info.l.lock();
                               // licitação tem de ser positiva
-                              if(info.reservaLicitacao(cliente.getId(),licitacao,this.nReserva) >= 0){
+                              if(info.reservaLicitacao(cliente.getId(),licitacao,this.nReserva,cliente.getEmail()) >= 0){
                                   // efetua reserva e adiciona ao cliente
-                                  cliente.addReserva(this.nReserva,new Reserva(licitacao));
+                                  cliente.addReserva(this.nReserva,new Reserva(nomeServidor,licitacao));
                                   this.nReserva++;
                                   pw.println(cliente.cliente2String());
                               }
@@ -205,12 +206,12 @@ class threadAutentica extends Thread{
                               // tenho servidores para reserva normal
                               if(info.reservaNormal(cliente.getId(),this.nReserva) >= 0){
                                 // efetua reserva e adiciona ao cliente
-                                cliente.addReserva(this.nReserva,new Reserva(info.getPreco()));
+                                cliente.addReserva(this.nReserva,new Reserva(nomeServidor,info.getPreco()));
                                 this.nReserva++;
                               }
                               // problema concorrencia 1º servidor 2º cliente
                               else if((numero = info.isPossible()) >= 0){
-                                 info.mudaDono(numero,cliente.getId(),clientes);
+                                 info.mudaDono(nomeServidor,numero,cliente.getId(),clientes);
                               }
                               else{
                                  pw.println("Pedimos desculpa pelo inconveniente, mas de momento não há servidores disponíveis deste tipo.");
@@ -231,7 +232,7 @@ class threadAutentica extends Thread{
                               }
                                 pw.println("\n\nAs suas reservas:");
                                 for(Map.Entry<Integer,Reserva> r : reservas.entrySet()){
-                                   pw.println("\n nº da reserva : " + r.getKey() + " --> { Preço : " + r.getValue().getPreco() + ", Tempo da Reserva : " + r.getValue().getTReserva() + "}");
+                                   pw.println(" nº da reserva : " + r.getKey() + " --> { Nome do Servidor: " + r.getValue().getNome() +  ", Preço : " + r.getValue().getPreco() + ", Tempo da Reserva : " + r.getValue().getTReserva() + "}");
                                  }
                                  int i;
                                  while(true){

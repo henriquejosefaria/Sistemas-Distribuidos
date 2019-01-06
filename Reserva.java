@@ -14,23 +14,30 @@ import java.io.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 
-class Reserva { // tempo e preço
+class Reserva { // nomeServer, tempo e preço
+  private String nome = null;
   private double preco = 0;
   private double tempo = 0;
 
   public Reserva(){
+    this.nome = null;
     this.preco = 0;
     this.tempo = 0;
   }
-  public Reserva(double d){
+  public Reserva(String nome, double d){
+    this.nome = nome;
     this.preco = d;
     this.tempo = System.currentTimeMillis() / (3600000);
   }
   public Reserva(Reserva r){
+    this.nome = r.getNome();
     this.preco = r.getPreco();
     this.tempo = r.getTReserva();
   }
 
+  public String getNome(){
+    return this.nome;
+  }
   public double getPreco(){
     return this.preco;
   }
@@ -38,7 +45,7 @@ class Reserva { // tempo e preço
     return this.tempo;
   }
   public double getTReserva(){
-    long t = System.currentTimeMillis() / (3600000);
+    long t = System.currentTimeMillis() / 3600000;
     return (double)(t - this.tempo);
   }
   public Reserva clone(){
@@ -51,8 +58,8 @@ class Reserva { // tempo e preço
     return s.toString();
   }
   public double getDivida(){
-    double i = 1;
-    if((i = ((System.currentTimeMillis() / (3600000)) - this.tempo)) <= 0) i = 1;
+    double i = ((System.currentTimeMillis() / 3600000) - this.tempo);
+    if( i <= 0) i = 1;
     return (this.preco * i);
   }
 }

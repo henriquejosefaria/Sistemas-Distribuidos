@@ -18,7 +18,7 @@ import java.util.concurrent.locks.ReentrantLock;
 class Informacao{ 
 
   private Map <Integer,Servidor> reservas; // numero de reserva e Servidor reservado (reserva/licitacao)
-  private Map <Integer,Double> licitacoes = new HashMap<Integer,Double>(); // licitacoes em espera
+  private Map <String,Double> licitacoes = new HashMap<String,Double>(); // licitacoes em espera
   public ReentrantLock l = new ReentrantLock();
   private String nomeServidor;      // nome do servidor
   private int nReservaNormal;       // nº de reservados normal
@@ -30,7 +30,7 @@ class Informacao{
 
   public Informacao(){
     this.reservas = new HashMap<Integer,Servidor>();
-    this.licitacoes = new HashMap<Integer,Double>();
+    this.licitacoes = new HashMap<String,Double>();
     this.nomeServidor = "Comon";
     this.nReservaNormal = 4;
     this.nReservaLicitacao = 4;
@@ -39,10 +39,10 @@ class Informacao{
     this.preco = 1;
   }
   
-  public Informacao(Map<Integer,Servidor> reservas, Map<Integer,Double> licitacoes, String nomeServidor, Integer nReservaNormal, Integer nReservaLicitacao, Integer nReservadosNormal, Integer nReservadosLicitacao, Double preco){
+  public Informacao(Map<Integer,Servidor> reservas, Map<String,Double> licitacoes, String nomeServidor, Integer nReservaNormal, Integer nReservaLicitacao, Integer nReservadosNormal, Integer nReservadosLicitacao, Double preco){
     for(Map.Entry<Integer,Servidor> r : reservas.entrySet())
       this.reservas.put(r.getKey(),r.getValue());
-     for(Map.Entry<Integer,Double> l : licitacoes.entrySet())
+     for(Map.Entry<String,Double> l : licitacoes.entrySet())
       this.licitacoes.put(l.getKey(),l.getValue());
     this.nomeServidor = nomeServidor;
     this.nReservaNormal = nReservaNormal;
@@ -54,10 +54,10 @@ class Informacao{
   
   public Informacao(Informacao i){
     Map <Integer,Servidor> reservas = i.getReservas();
-    Map <Integer,Double> licitacoes = i.getLicitacoes();
+    Map <String,Double> licitacoes = i.getLicitacoes();
     for(Map.Entry<Integer,Servidor> r : reservas.entrySet())
       this.reservas.put(r.getKey(),r.getValue());
-    for(Map.Entry<Integer,Double> l : licitacoes.entrySet())
+    for(Map.Entry<String,Double> l : licitacoes.entrySet())
       this.licitacoes.put(l.getKey(),l.getValue());
     this.nomeServidor = i.getNomeServidor();
     this.nReservaNormal = i.getLivresReserva();
@@ -139,7 +139,7 @@ class Informacao{
     }
   }
 
-  public Map<Integer,Double> getLicitacoes(){
+  public Map<String,Double> getLicitacoes(){
     l.lock();
     try{
       return this.licitacoes;
@@ -202,18 +202,18 @@ class Informacao{
     }
   }
   
-  public int reservaLicitacao(Integer id,Double d,int n){
+  public int reservaLicitacao(Integer idCliente,Double d,int n,String email){
     l.lock();
     int i;
     try{
       if(this.nReservaLicitacao > 0){ // se existirem  servidores para licitação
         this.nReservaLicitacao--;
         this.nReservadosLicitacao++;
-        this.reservas.put(n,new Servidor(2,2,id));
+        this.reservas.put(n,new Servidor(2,2,idCliente));
         return n;
       }
       else{ // põe em lista de espera
-        this.licitacoes.put(id,d);
+        this.licitacoes.put(email,d);
         return -1;
       } 
 
@@ -263,14 +263,14 @@ class Informacao{
     }
   }
 
-  public int mudaDono(int numero, int id, Map<String,Cliente> clientes){
+  public int mudaDono(String nomeServidor,int numero, int id, Map<String,Cliente> clientes){
     l.lock();
     Cliente c1 = new Cliente();
     Cliente c2 = new Cliente();
     try{
       Servidor r = reservas.get(numero);
-      String e1 = null;
-      String e2 = null;
+      String e1 = null; // cliente que perde server
+      String e2 = null; // cliente que reserva server
       for(Map.Entry<String,Cliente> c : clientes.entrySet()){
         if(c.getValue().getId() == r.getIdCliente()) e1 = c.getValue().getEmail();
         if(c.getValue().getId() == id) e2 = c.getValue().getEmail();
@@ -285,10 +285,10 @@ class Informacao{
         c2.l.lock();
         c1.l.lock();
       }
-      clientes.get(r.getIdCliente()).growDivida(numero); // aumenta divida do cliente
-      clientes.get(r.getIdCliente()).removeReserva(numero); // remove a reserva da lista de reservas do cliente
+      clientes.get(e1).growDivida(numero); // aumenta divida do cliente
+      clientes.get(e1).removeReserva(numero); // remove a reserva da lista de reservas do cliente
       // adiciona a reserva ao novo cliente
-      clientes.get(id).addReserva(numero,new Reserva(this.preco));
+      clientes.get(e2).addReserva(numero,new Reserva(nomeServidor,this.preco));
       r.setIdCliente(id);
       r.setTReserva(1);
       return 1;
@@ -316,21 +316,23 @@ class Informacao{
       }else{ // tipo -> reservaLicitação
         if(this.licitacoes.size() > 0){
           double l = 0;
+          String e = null;
           int id = -1;
-          for(Map.Entry<Integer,Double> licitacao : this.licitacoes.entrySet()){
+          for(Map.Entry<String,Double> licitacao : this.licitacoes.entrySet()){
             if(licitacao.getValue() > l){
               l = licitacao.getValue();
-              id = licitacao.getKey();
+              e = licitacao.getKey();
             }
           }
           this.licitacoes.remove(id);
+          id = clientes.get(e).getId();
           // atualiza ocupante
           this.reservas.get(i).setTReserva(2);
           this.reservas.get(i).setIdCliente(id);
           //atualiza reserva no cliente
-          c = clientes.get(id);
+          c = clientes.get(e);
           c.l.lock();
-          c.addReserva(i,new Reserva(l));
+          c.addReserva(i,new Reserva(this.nomeServidor,l));
         } else{
           if(i2 == 1){ // estava reservado normalmente
             this.nReservadosNormal--;
