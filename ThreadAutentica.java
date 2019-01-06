@@ -126,11 +126,7 @@ class ThreadAutentica extends Thread{
                         System.out.println("Foi inserido algo que não 0 ou email.");
                       }
                   }
-                  if(rollback == 1){
-                    rollback = 0;
-                    break;
-                  }
-                  while(b){ // user existe
+                  while(b && rollback == 0){ // user existe
                       //2º recebe password do user
                       pw.println("Password:");
                       pw.println("fim");
@@ -146,11 +142,7 @@ class ThreadAutentica extends Thread{
                           }
                       } else break;
                   }
-                  if(rollback == 1){
-                    rollback = 0;
-                    break;
-                  }
-                  while(true){
+                  while(true && rollback == 0){
                         while(true){
                           //-> neste ponto cliente está autenticado
                           pw.println("\n\nEscolha uma opção:");
@@ -347,6 +339,7 @@ class ThreadAutentica extends Thread{
                            pw.println("fim");
                         }
                   }
+                  rollback = 0;
                } else {
                  pw.println("A escolha inserida não é válida.");
                }
