@@ -19,11 +19,11 @@ class ThreadAutentica extends Thread{
   private Map<String,Informacao> servidores = new HashMap<>();
   private int nReserva = 1;
   Socket cs;
-  public ThreadAutentica(Socket cs,Map<String,Informacao> servidores, Map<String,Cliente> clientes){
+  public ThreadAutentica(Socket cs,Map<String,Informacao> servidores, Map<String,Cliente> clientes,int n){
     this.cs = cs;
     this.clientes = clientes; 
     this.servidores = servidores;
-    this.nReserva = 1;
+    this.nReserva = n;
   }
   public void run(){
     Cliente cliente = new Cliente();

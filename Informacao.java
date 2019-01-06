@@ -251,6 +251,7 @@ class Informacao{
       int i;
       for(Map.Entry<Integer,Servidor> r : reservas.entrySet()){
         i = r.getKey();
+        System.out.println("Tipo : " +r.getValue().getTipo() + "; \nReservado ou licitado? : " + r.getValue().getTReserva());
         // se for servidor leilão e tiver sido leiloado
         if(r.getValue().getTipo() == 2 && r.getValue().getTReserva() == 2){
           return i;

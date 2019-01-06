@@ -19,6 +19,7 @@ class Servidores{
   public static void main(String[] args) throws Exception {
     Map<String,Cliente> clientes = new HashMap<>();
     Map<String,Informacao> servidores = new HashMap<>();
+    int n = 1;
     ArrayList <String> nomes = new ArrayList<>();
     nomes.add("Somas");
     nomes.add("Subtracoes");
@@ -39,7 +40,7 @@ class Servidores{
          Socket cs = ls.accept(); // cliente ligou-se
          System.out.println("Cliente ligou-se");
            // envio do cliente para uma thread de autenticação
-         ThreadAutentica ta = new ThreadAutentica(cs,servidores,clientes);
+         ThreadAutentica ta = new ThreadAutentica(cs,servidores,clientes,n);
          ta.start();
      } 
     } catch(IOException e){
