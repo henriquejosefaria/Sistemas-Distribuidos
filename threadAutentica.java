@@ -15,11 +15,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 // aceitam clientes e direcionam para servidores que estejam vazios
 class threadAutentica extends Thread{
-  private Map<Integer,Cliente> clientes = new HashMap<>();
+  private Map<String,Cliente> clientes = new HashMap<>();
   private Map<String,Informacao> servidores = new HashMap<>();
   private int nReserva = 1;
   Socket cs;
-  public threadAutentica(Socket cs,Map<String,Informacao> servidores, Map<Integer,Cliente> clientes){
+  public threadAutentica(Socket cs,Map<String,Informacao> servidores, Map<String,Cliente> clientes){
     this.cs = cs;
     this.clientes = clientes; 
     this.servidores = servidores;
@@ -54,14 +54,25 @@ class threadAutentica extends Thread{
                } else if(escolha == 1){ // registar novo cliente
                    b = true;
                    // regista novo cliente
+                   int x = this.clientes.size() + 1;
+                   String pass = null;
+                   String email = null;
                    while(b){
-                    int x = clientes.size()+1;
-                    pw.println("\nO seu id é : " + x);
+                    pw.println("Insira o seu email:");
+                    pw.println("fim");
+                    email = br.readLine();
+                    if(email.length()>0 && email.contains("@") && !clientes.containsKey(email)){
+                      break;
+                    } else{
+                      pw.println("\nInsira uma email válido por favor.");
+                    }
+                   }
+                   while(b){
                     pw.println("Insira a sua nova password:");
                     pw.println("fim");
-                    String pass = br.readLine();
+                    pass = br.readLine();
                     if(pass.length()>0){
-                      clientes.put(x,new Cliente(x,pass,new HashMap<Integer,Reserva>(),0));
+                      clientes.put(email,new Cliente(x,pass,email,new HashMap<Integer,Reserva>(),0));
                       break;
                     } else{
                       pw.println("\nInsira uma password não vazia por favor.");
@@ -70,14 +81,14 @@ class threadAutentica extends Thread{
                } else if(escolha == 2){ // entrar como cliente
                   while(b){ // fase de autenticação
                       // 1º recebe userId
-                      pw.println("\nUserId:");
+                      pw.println("\nEmail:");
                       pw.println("fim");
                       try{
-                        int userId = Integer.parseInt(br.readLine());
-                        if(!this.clientes.containsKey(userId)){
-                           pw.println("\nInsira um UserId válido.");
+                        String email = br.readLine();
+                        if(!this.clientes.containsKey(email)){
+                           pw.println("\nInsira um email válido (Existente).");
                         } else{
-                           cliente = clientes.get(userId);
+                           cliente = clientes.get(email);
                            break;
                         } 
                       } catch(NumberFormatException e){
@@ -85,7 +96,7 @@ class threadAutentica extends Thread{
                         System.out.println("Foi inserido algo que não um número.");
                       }
                   }
-                  while(b){ // userId existe
+                  while(b){ // user existe
                       //2º recebe password do user
                       pw.println("Password:");
                       pw.println("fim");
