@@ -14,7 +14,7 @@ import java.io.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 
-class servidores{
+class Servidores{
 
   public static void main(String[] args) throws Exception {
     Map<String,Cliente> clientes = new HashMap<>();

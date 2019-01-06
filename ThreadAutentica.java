@@ -14,7 +14,7 @@ import java.io.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 // aceitam clientes e direcionam para servidores que estejam vazios
-class threadAutentica extends Thread{
+class ThreadAutentica extends Thread{
   private Map<String,Cliente> clientes = new HashMap<>();
   private Map<String,Informacao> servidores = new HashMap<>();
   private int nReserva = 1;
