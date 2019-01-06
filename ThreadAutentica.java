@@ -17,13 +17,15 @@ import java.util.concurrent.locks.ReentrantLock;
 class ThreadAutentica extends Thread{
   private Map<String,Cliente> clientes = new HashMap<>();
   private Map<String,Informacao> servidores = new HashMap<>();
-  private int nReserva = 1;
+  private GestorReservas gestorRes;
   Socket cs;
-  public ThreadAutentica(Socket cs,Map<String,Informacao> servidores, Map<String,Cliente> clientes,int n){
+
+  public ThreadAutentica(Socket cs,Map<String,Informacao> servidores, Map<String,Cliente> clientes,GestorReservas gestorRes){
     this.cs = cs;
     this.clientes = clientes; 
     this.servidores = servidores;
-    this.nReserva = n;
+    this.nReserva = 1;
+    this.gestorRes = gestorRes;
   }
   public void run(){
     Cliente cliente = new Cliente();
@@ -77,7 +79,11 @@ class ThreadAutentica extends Thread{
                       pw.println("\nInsira uma email válido por favor.");
                     }
                    }
-                   while(b && rollback == 0){
+                   if(rollback == 1){
+                    rollback = 0;
+                    break;
+                   }
+                   while(b){
                     pw.println("Insira a sua nova password:");
                     pw.println("fim");
                     pass = br.readLine();
@@ -95,7 +101,6 @@ class ThreadAutentica extends Thread{
                       pw.println("\nInsira uma password não vazia por favor.");
                     }
                    }
-                  rollback = 0;
                } else if(escolha == 2){ // entrar como cliente
                   while(b){ // fase de autenticação
                       // 1º recebe userId
@@ -180,13 +185,21 @@ class ThreadAutentica extends Thread{
                             pw.println("Preço : " + info.getPreco());
                             pw.println("//--------------------------------//");
                           }
+                          pw.println("\nPode inserir 0 caso deseje voltar ao menu inicial.");
                           pw.println("\n\nIndique o nome do servidor que prentende utilizar.");
                           pw.println("fim");
                           while(b){ // escolher tipo de servidor
                            nomeServidor = br.readLine();
                            if(!servidores.containsKey(nomeServidor)){
-                             pw.println("Insira um nome de servidor válido");
-                             pw.println("fim");
+                            try{
+                              if(Integer.parseInt(nomeServidor) == 0){
+                                rollback = 1;
+                                break;
+                              }
+                            } catch(NumberFormatException e){
+                              pw.println("Insira um nome de servidor válido");
+                              pw.println("fim");
+                            }
                            } else{
                             info = servidores.get(nomeServidor);
                             break;
@@ -228,14 +241,15 @@ class ThreadAutentica extends Thread{
                               }
                               info.l.lock();
                               // licitação tem de ser positiva
-                              if(info.reservaLicitacao(cliente.getId(),licitacao,this.nReserva,cliente.getEmail()) >= 0){
+                              if(info.reservaLicitacao(cliente.getId(),licitacao,gestorRes.getNReserva(),cliente.getEmail()) >= 0){
                                   // efetua reserva e adiciona ao cliente
-                                  cliente.addReserva(this.nReserva,new Reserva(nomeServidor,licitacao));
-                                  this.nReserva++;
+                                  cliente.addReserva(gestorRes.getNReserva(),new Reserva(nomeServidor,licitacao));
+                                  gestorRes.incNReserva();
                                   pw.println(cliente.cliente2String());
                               }
                             } catch(IOException e){
                                 pw.println("Erro ao introduzir valor. Reserva cancelada.");
+                                pw.println("fim");
                             } finally{
                               info.l.unlock();
                             }
@@ -244,19 +258,18 @@ class ThreadAutentica extends Thread{
                             try{
                               info.l.lock(); // isto serve caso entre no else if (impede descrepancias)
                               // tenho servidores para reserva normal
-                              if(info.reservaNormal(cliente.getId(),this.nReserva) >= 0){
+                              if(info.reservaNormal(cliente.getId(),gestorRes.getNReserva()) >= 0){
                                 // efetua reserva e adiciona ao cliente
-                                cliente.addReserva(this.nReserva,new Reserva(nomeServidor,info.getPreco()));
-                                this.nReserva++;
-                                pw.println(cliente.cliente2String());
+                                cliente.addReserva(gestorRes.getNReserva(),new Reserva(nomeServidor,info.getPreco()));
+                                gestorRes.incNReserva();
                               }
                               // problema concorrencia 1º servidor 2º cliente
                               else if((numero = info.isPossible()) >= 0){
                                  info.mudaDono(nomeServidor,numero,cliente.getId(),clientes);
-                                 pw.println(cliente.cliente2String());
                               }
                               else{
                                  pw.println("Pedimos desculpa pelo inconveniente, mas de momento não há servidores disponíveis deste tipo.");
+                                 pw.println("fim");
                               }
                              } finally{
                                info.l.unlock();

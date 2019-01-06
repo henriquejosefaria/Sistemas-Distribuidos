@@ -35,12 +35,13 @@ class Servidores{
       servidores.put(nomes.get(i),new Informacao());
     }
     ServerSocket ls = new ServerSocket(1234); // estou a escuta de clientes
+    GestorReservas gestorRes = new GestorReservas();
     try{
       while(true){
          Socket cs = ls.accept(); // cliente ligou-se
          System.out.println("Cliente ligou-se");
            // envio do cliente para uma thread de autenticação
-         ThreadAutentica ta = new ThreadAutentica(cs,servidores,clientes,n);
+         ThreadAutentica ta = new ThreadAutentica(cs,servidores,clientes,gestorRes);
          ta.start();
      } 
     } catch(IOException e){
