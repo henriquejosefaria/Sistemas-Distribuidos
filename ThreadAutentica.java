@@ -206,7 +206,7 @@ class ThreadAutentica extends Thread{
                            }
                           } // servidor escolhido e possível de usar
                           // escolher tipo de reserva --> possivelmente faz 
-                          while(b){ 
+                          while(b && rollback == 0){ 
                            pw.println("Indique o tipo de reserva que pretende fazer :");
                            pw.println("Reservar servidor -> Insira 1 ");
                            pw.println("Ir a leilão por servidor -> Insira 2");
@@ -214,6 +214,10 @@ class ThreadAutentica extends Thread{
                            try{
                             uso = Integer.parseInt(br.readLine());
                             if(uso != 1 && uso != 2){
+                              if(uso == 0){
+                                rollback = 1;
+                                break;
+                              }
                               pw.println("Insira um tipo de reserva válida.");
                               pw.println("fim");
                             } else{
@@ -227,7 +231,7 @@ class ThreadAutentica extends Thread{
                            }
                           } // tipo de reserva escolhido e possível até ao momento
                           // leiloar servidor
-                          if(uso == 2){ // licitar
+                          if(uso == 2 && rollback == 0){ // licitar
                             try{
                               pw.println("Insira valor que está disposto a pagar:");
                               pw.println("fim");
@@ -254,7 +258,7 @@ class ThreadAutentica extends Thread{
                               info.l.unlock();
                             }
                           }
-                          if(uso == 1){ // reservar
+                          if(uso == 1 && rollback == 0){ // reservar
                             try{
                               info.l.lock(); // isto serve caso entre no else if (impede descrepancias)
                               // tenho servidores para reserva normal
