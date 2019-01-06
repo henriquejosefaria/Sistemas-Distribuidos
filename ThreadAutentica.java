@@ -77,11 +77,7 @@ class ThreadAutentica extends Thread{
                       pw.println("\nInsira uma email válido por favor.");
                     }
                    }
-                   if(rollback == 1){
-                    rollback = 0;
-                    break;
-                   }
-                   while(b){
+                   while(b && rollback == 0){
                     pw.println("Insira a sua nova password:");
                     pw.println("fim");
                     pass = br.readLine();
@@ -99,6 +95,7 @@ class ThreadAutentica extends Thread{
                       pw.println("\nInsira uma password não vazia por favor.");
                     }
                    }
+                  rollback = 0;
                } else if(escolha == 2){ // entrar como cliente
                   while(b){ // fase de autenticação
                       // 1º recebe userId
@@ -239,7 +236,6 @@ class ThreadAutentica extends Thread{
                               }
                             } catch(IOException e){
                                 pw.println("Erro ao introduzir valor. Reserva cancelada.");
-                                pw.println("fim");
                             } finally{
                               info.l.unlock();
                             }
@@ -261,7 +257,6 @@ class ThreadAutentica extends Thread{
                               }
                               else{
                                  pw.println("Pedimos desculpa pelo inconveniente, mas de momento não há servidores disponíveis deste tipo.");
-                                 pw.println("fim");
                               }
                              } finally{
                                info.l.unlock();

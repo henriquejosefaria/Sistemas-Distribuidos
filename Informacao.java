@@ -278,7 +278,7 @@ class Informacao{
       } 
       c1 = clientes.get(e1);
       c2 = clientes.get(e2);
-      if(r.getIdCliente() < id){
+      if(c1.getId() < c2.getId()){
         c1.l.lock();
         c2.l.lock();
       } else{
@@ -324,7 +324,7 @@ class Informacao{
               e = licitacao.getKey();
             }
           }
-          this.licitacoes.remove(id);
+          this.licitacoes.remove(e);
           id = clientes.get(e).getId();
           // atualiza ocupante
           this.reservas.get(i).setTReserva(2);
