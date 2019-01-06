@@ -252,10 +252,12 @@ class ThreadAutentica extends Thread{
                                 // efetua reserva e adiciona ao cliente
                                 cliente.addReserva(this.nReserva,new Reserva(nomeServidor,info.getPreco()));
                                 this.nReserva++;
+                                pw.println(cliente.cliente2String());
                               }
                               // problema concorrencia 1º servidor 2º cliente
                               else if((numero = info.isPossible()) >= 0){
                                  info.mudaDono(nomeServidor,numero,cliente.getId(),clientes);
+                                 pw.println(cliente.cliente2String());
                               }
                               else{
                                  pw.println("Pedimos desculpa pelo inconveniente, mas de momento não há servidores disponíveis deste tipo.");
