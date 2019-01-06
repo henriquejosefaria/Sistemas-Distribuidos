@@ -85,7 +85,7 @@ class ThreadAutentica extends Thread{
                     pw.println("Insira a sua nova password:");
                     pw.println("fim");
                     pass = br.readLine();
-                    if(pass.length()>0 && pass != 0){
+                    if(pass.length()>0 && !pass.equals("0")){
                       clientes.put(email,new Cliente(x,pass,email,new HashMap<Integer,Reserva>(),0));
                       break;
                     } else{
