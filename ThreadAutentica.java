@@ -279,6 +279,7 @@ class ThreadAutentica extends Thread{
                              }
                              
                           }
+                          rollback = 0;
                         }
                         else if(escolha == 2){ // libertar servidores alocados
                              while(b){
