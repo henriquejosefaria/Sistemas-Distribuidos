@@ -17,6 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Cliente{
   private int id;
   private String password;
+  private String email;
   public ReentrantLock l = new ReentrantLock();
   private Map<Integer,Reserva> reservas = new HashMap<Integer,Reserva>();
   private double divida = 0; 
@@ -24,13 +25,15 @@ public class Cliente{
   public Cliente(){
     this.id = -1;
     this.password = "pass";
+    this.email = null;
     this.reservas = new HashMap<Integer,Reserva>();
     this.divida = 0;
   }
 
-  public Cliente(int id,String password, HashMap<Integer,Reserva> reservas, double divida){
+  public Cliente(int id,String password,String email, HashMap<Integer,Reserva> reservas, double divida){
     this.id = id;
     this.password = password;
+    this.email = email;
     this.reservas = new HashMap<Integer,Reserva>();
     for(Map.Entry<Integer,Reserva> r : reservas.entrySet()){
       this.reservas.put(r.getKey(),r.getValue());
@@ -41,6 +44,7 @@ public class Cliente{
   public Cliente(Cliente c){
     this.id = c.getId();
     this.password = c.getPass();
+    this.email = c.getEmail();
     this.reservas = new HashMap<Integer,Reserva>();
     this.reservas = c.getReservas();
     this.divida = c.getDivida();
@@ -51,6 +55,9 @@ public class Cliente{
   } 
   public String getPass(){
     return this.password;
+  }
+  public String getEmail(){
+    return this.email;
   }
   public Map<Integer,Reserva> getReservas(){
     Map<Integer,Reserva> r = new HashMap<>();
@@ -68,6 +75,9 @@ public class Cliente{
   public void setPass(String pass){
     this.password = pass;
   }
+  public void setEmail(String email){
+    this.email = email;
+  }
   public void addReserva(int nReserva,Reserva r){
     this.reservas.put(nReserva,r);
   }
@@ -79,6 +89,7 @@ public class Cliente{
     StringBuilder s = new StringBuilder();
     s.append("Id: " + this.id);
     s.append("\nPassword : " + this.password);
+    s.append("\nEmail : " + this.email);
     for(Map.Entry<Integer,Reserva> r : this.reservas.entrySet()){
       s.append("\n nº da reserva : " + r.getKey() + " --> { Preço : " + r.getValue().getPreco() + ", Tempo da Reserva : " + r.getValue().getTReserva() + "}");
     }

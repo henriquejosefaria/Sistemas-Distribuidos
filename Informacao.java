@@ -263,15 +263,21 @@ class Informacao{
     }
   }
 
-  public int mudaDono(int numero, int id, Map<Integer,Cliente> clientes){
+  public int mudaDono(int numero, int id, Map<String,Cliente> clientes){
     l.lock();
     Cliente c1 = new Cliente();
     Cliente c2 = new Cliente();
     try{
-
       Servidor r = reservas.get(numero);
-      c1 = clientes.get(r.getIdCliente());
-      c2 = clientes.get(id);
+      String e1 = null;
+      String e2 = null;
+      for(Map.Entry<String,Cliente> c : clientes.entrySet()){
+        if(c.getValue().getId() == r.getIdCliente()) e1 = c.getValue().getEmail();
+        if(c.getValue().getId() == id) e2 = c.getValue().getEmail();
+        if (e1 != null && e2 != null) break;
+      } 
+      c1 = clientes.get(e1);
+      c2 = clientes.get(e2);
       if(r.getIdCliente() < id){
         c1.l.lock();
         c2.l.lock();
@@ -296,7 +302,7 @@ class Informacao{
     }
   }
 
-  public void removeReserva(int i, Map<Integer,Cliente> clientes){
+  public void removeReserva(int i, Map<String,Cliente> clientes){
     l.lock();
     Cliente c = new Cliente();
     c.l.lock();

@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 class servidores{
 
   public static void main(String[] args) throws Exception {
-    Map<Integer,Cliente> clientes = new HashMap<>();
+    Map<String,Cliente> clientes = new HashMap<>();
     Map<String,Informacao> servidores = new HashMap<>();
     ArrayList <String> nomes = new ArrayList<>();
     nomes.add("Somas");
