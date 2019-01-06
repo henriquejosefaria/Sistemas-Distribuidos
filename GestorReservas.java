@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class GestorReservas{
 
 	  public ReentrantLock l = new ReentrantLock();
-	  int nReserva;
+	  private int nReserva;
 
 	  public GestorReservas(){
 	  	nReserva = 1;
